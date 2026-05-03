@@ -1,116 +1,150 @@
-# Firefox-FingerPrint-Analyzer🦊
+<div align="center">
 
-[中文](#中文说明) | [English](#english)
+<img src="https://raw.githubusercontent.com/LoseNine/Firefox-FingerPrint-Analyzer/main/icon.png" width="96" height="96" alt="Ruyi Trace" />
+
+# 如意 Trace · Ruyi Trace
+
+[**🇨🇳 简体中文**](./README.md) &nbsp;|&nbsp; [🇬🇧 English](./README.en.md)
+
+A research-grade, instrumented Firefox build for fingerprint risk-control analysis and one-click AI-assisted JavaScript reverse-engineering.
+
+![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue)
+![Firefox](https://img.shields.io/badge/firefox-DOMTrace-orange)
+![License](https://img.shields.io/badge/license-MPL--2.0-green)
+![Status](https://img.shields.io/badge/status-research-yellow)
+
+</div>
 
 ---
 
-## 中文说明
+### 这是什么
 
-### 简介
-Firefox-FingerPrint-Analyzer 是一款用于分析 Firefox 浏览器 DOM API 调用的可视化工具。它可以帮助安全研究人员和开发者追踪网页的 JavaScript 行为，检测浏览器指纹采集、网络请求和 Cookie 操作等敏感行为。
-这里制作了一个简单的分析页面供参考，使用者可以直接对生成的日志文件进行任何工具的分析。
+**如意 Trace** 是一个面向**网站指纹风控研究**与**辅助 JS 逆向学术分析**的桌面工具，由两部分组成：
 
-### 日志格式
-工具可以捕获并分析完整的 DOM/BOM/指纹相关 API 调用日志，每条日志为JSON 格式，包含以下字段：
+1. **如意定制 trace 内核**（已随包发布）。
+2. **Electron 客户端**（`RuyiTrace.exe`）——一键启动定制内核、采集 NDJSON 日志、管理日志文件。
 
-| 字段 | 说明 |
-|------|------|
-| `seq` | 序列号 |
-| `type` | 操作类型（call/get/set） |
-| `interface` | 接口名称（如 Window、Document、Navigator） |
-| `member` | 成员方法或属性名 |
-| `args` | 调用参数 |
-| `return` | 返回值 |
-| `stack` | 调用堆栈 |
+> ⚠️ **仅限学术研究、安全教育与防御性分析使用。** 请勿用于绕过任何网站的服务条款或业务风控。
 
-**示例日志：**
+### 核心价值
+
+> **ruyiPage 抓轮廓 → 如意 Trace 采集运行时日志 → 把日志交给 AI → 自动得到补环境代码与指纹风控分析报告。**
+
+由于探针位于 **C++ 内核层而非 JS 层**，页面脚本无法通过原型检测、`toString` 嗅探、或已知 hook 特征发现监听存在 —— 因此采集的 trace 数据可作为研究指纹检测策略的高保真基线。
+
+### 推荐工作流
+
+1. **先用 [ruyiPage](https://github.com/LoseNine/ruyiPage) 自动化框架（搭配配套的 151 内核）分析目标网页**，获取页面加载的全部 JS 文件并抓取关键数据包，建立网站的整体轮廓。
+2. **再用本工具（如意 Trace）启动定制 Firefox 进行实际访问**，生成 NDJSON 运行时调用日志。
+3. **把日志直接交给 AI**，让 AI 结合第 1 步拿到的 JS 文件和数据包，对相关文件进行定位、补环境与指纹风控分析。
+
+### 快速上手
+
+1. **保持完整目录结构**：`RuyiTrace.exe` 必须与 `firefox/` 子目录处于同一文件夹。
+2. **双击运行 `RuyiTrace.exe`**。
+3. 在窗口中：
+   - 填写**启动页面**（默认 `https://xjbedu.site/`）
+   - 选择**日志目录**（默认 `<exe目录>/log`）
+   - 确认顶部"定制内核"徽章为绿色（**定制内核已就绪**）
+4. 点击 **开始采集** —— 定制 Firefox 自动启动并加载目标页面，右上角胶囊开始计时。
+5. 在浏览器中正常浏览 / 触发指纹检测脚本。
+6. 完成后点击 **停止采集**，日志保存为 `trace_<时间戳>_<PID>.ndjson`。
+7. 点击 **打开目录** 取走 NDJSON 日志文件。
+
+### 把日志交给 AI
+
+NDJSON 每行一条事件，结构如下：
+
 ```json
-{"seq":25264,"type":"call","interface":"Window","member":"clearTimeout","args":[60],"return":null,"stack":[{"func":"78581/e.prototype.flush/x</<","file":"https://demo.fingerprint.com/_next/static/chunks/8183-99f8fe9127fb0d6f.js","line":1,"col":7197}]}
-{"seq":25265,"type":"call","interface":"JSON","member":"stringify","args":[{"api_key":"88cf5b0af46a7ea03e4c55e329297106","events":[{"device_id":"0MgE8ZVqgVooipumpMsY","session_id":1.77167e+12}]}],"return":"{...}","stack":[...]}
-{"seq":25266,"type":"call","interface":"Window","member":"fetch","args":["https://demo.fingerprint.com/ampl-api/2/httpapi",{"headers":{"Content-Type":"application/json"},"body":"{...}","method":"POST"}],"return":"[Promise]","stack":[...]}
-{"seq":25267,"type":"call","interface":"Performance","member":"now","args":[],"return":11581,"stack":[{"func":"c","file":"https://demo.fingerprint.com/_next/static/chunks/375-4cbfcfb8f678c424.js","line":9,"col":3685}]}
-{"seq":25268,"type":"call","interface":"Window","member":"queueMicrotask","args":["[object]"],"return":null,"stack":[...]}
-{"seq":25269,"type":"set","interface":"CSSStyleProperties","member":"set opacity","value":0,"stack":[{"func":"tP","file":"https://demo.fingerprint.com/_next/static/chunks/375-4cbfcfb8f678c424.js","line":9,"col":10885}]}
+{
+  "t": "call",
+  "api": "CanvasRenderingContext2D.fillText",
+  "args": ["BrowserLeaks,com", 4, 17],
+  "stack": [
+    {"file": "https://example.test/fp.js", "line": 42, "col": 17}
+  ]
+}
 ```
 
-用户可以自行分析或者使用AI分析，一键分析风控指纹。
+**推荐 AI 分析提示词模板：**
 
-### 功能特性
-- 📊 **总体统计** - 按接口分类统计所有 DOM API 调用次数
-- 🌐 **网络/Cookie监控** - 追踪 fetch、XMLHttpRequest 请求和Cookie 操作
-- 📝 **Console 日志** - 捕获页面的 console 输出
-- 🎨 **Canvas 指纹检测** - 检测 Canvas 指纹采集相关的 API 调用
-- ⚙️ **自定义设置** - 支持自定义字体、颜色主题
+```
+你是一名前端安全研究员。我已经做了如下前置工作：
+1. 先使用 ruyiPage 自动化框架（搭配配套 151 内核）分析了目标网页，
+   获取了页面加载的全部 JS 文件、抓取了关键数据包，建立了网站整体轮廓。
+2. 然后使用如意 Trace 工具采集了一份完整的 DOM/JS API 运行时调用日志（NDJSON）。
 
-### 使用方法
-1. 设置目标网址
-2. 选择日志保存路径
-3. 选择 Firefox 可执行文件路径（需使用支持 DOM Trace 的定制版 Firefox）
-4. 点击"启动浏览器 && 开始记录"
-5. 在浏览器中操作完成后，点击"关闭浏览器 && 停止记录"
-6. 自动解析并展示分析结果
+现在我把这份运行时日志直接交给你，请你结合第 1 步拿到的 JS 文件与数据包：
+1. 在 NDJSON 中识别所有指纹采集点（Canvas / WebGL / WebRTC / Audio /
+   Navigator / Screen / Crypto），并定位到具体是哪个 JS 文件的哪个函数。
+2. 还原每个指纹函数的完整调用链与入口脚本。
+3. 输出一份补环境（环境替换）JavaScript 代码模板，使脚本运行结果与真实浏览器一致。
+4. 列出该网站采用的指纹风控策略与对抗优先级。
 
-### 系统要求
-- Windows 10/11
-- 定制版 Firefox（支持 DOM Trace 输出）
-
-### 安装
-直接运行 `DOMAnalyzer.exe` 即可。
-
-
----
-
-## English
-
-### Introduction
-Firefox Trace Analyzer is a visualization tool for analyzing Firefox browser DOM API calls. It helps security researchers and developers track JavaScript behavior on web pages, detecting sensitive activities such as browser fingerprinting, network requests, and cookie operations.
-
-### Features
-- 📊 **Statistics** - Categorize and count all DOM API calls by interface
-- 🌐 **Network/Cookie Monitoring** - Track fetch, XMLHttpRequest requests and cookie operations
-- 📝 **Console Logs** - Capture page console output
-- 🎨 **Canvas Fingerprint Detection** - Detect Canvas fingerprinting related API calls
-- ⚙️ **Custom Settings** - Support custom fonts and color themes
-
-### Usage
-1. Set the target URL
-2. Select log file path
-3. Select Firefox executable path (requires custom Firefox build with DOM Trace support)
-4. Click "Start Browser && Begin Recording"
-5. After browsing, click "Stop Browser && Stop Recording"
-6. Results are automatically parsed and displayed
-
-### System Requirements
-- Windows 10/11
-- Custom Firefox build (with DOM Trace output support)
-
-### Installation
-Simply run `DOMAnalyzer.exe`.
-
-
-### LOG
-工具可以捕获并分析完整的 DOM/BOM/指纹相关 API 调用日志，每条日志为JSON 格式，包含以下字段：
-| 字段 | 说明 |
-|------|------|
-| `seq` | 序列号 |
-| `type` | 操作类型（call/get/set） |
-| `interface` | 接口名称（如 Window、Document、Navigator） |
-| `member` | 成员方法或属性名 |
-| `args` | 调用参数 |
-| `return` | 返回值 |
-| `stack` | 调用堆栈 |
-**示例日志：**
-```json
-{"seq":25264,"type":"call","interface":"Window","member":"clearTimeout","args":[60],"return":null,"stack":[{"func":"78581/e.prototype.flush/x</<","file":"https://demo.fingerprint.com/_next/static/chunks/8183-99f8fe9127fb0d6f.js","line":1,"col":7197}]}
-{"seq":25265,"type":"call","interface":"JSON","member":"stringify","args":[{"api_key":"88cf5b0af46a7ea03e4c55e329297106","events":[{"device_id":"0MgE8ZVqgVooipumpMsY","session_id":1.77167e+12}]}],"return":"{...}","stack":[...]}
-{"seq":25266,"type":"call","interface":"Window","member":"fetch","args":["https://demo.fingerprint.com/ampl-api/2/httpapi",{"headers":{"Content-Type":"application/json"},"body":"{...}","method":"POST"}],"return":"[Promise]","stack":[...]}
-{"seq":25267,"type":"call","interface":"Performance","member":"now","args":[],"return":11581,"stack":[{"func":"c","file":"https://demo.fingerprint.com/_next/static/chunks/375-4cbfcfb8f678c424.js","line":9,"col":3685}]}
-{"seq":25268,"type":"call","interface":"Window","member":"queueMicrotask","args":["[object]"],"return":null,"stack":[...]}
-{"seq":25269,"type":"set","interface":"CSSStyleProperties","member":"set opacity","value":0,"stack":[{"func":"tP","file":"https://demo.fingerprint.com/_next/static/chunks/375-4cbfcfb8f678c424.js","line":9,"col":10885}]}
+[在此粘贴 NDJSON 内容]
 ```
 
+把日志贴给 ChatGPT、Claude、Gemini 等任意大模型即可获得：
+- 📊 **指纹风控分析报告**（哪些 API 被读取、调用顺序、关键参数）
+- 🛠️ **补环境代码模板**（Canvas / WebGL / Audio / Navigator 自动还原）
+- 🔍 **完整的 JS 调用图谱**（从入口函数到底层 API 的完整路径）
+
+### 文件结构
+
+```
+RuyiTrace/                  (≈ 427 MB)
+├── RuyiTrace.exe           Electron 客户端 (≈ 87 MB)
+├── README.md               本说明
+└── firefox/                如意定制 trace 内核 (≈ 340 MB)
+    ├── firefox.exe
+    ├── RUYI_DOMTRACE.txt   ← 内核标志文件，请勿删除
+    └── ... DLL / 资源
+```
+
+### 高级使用
+
+**手动指定环境变量启动 Firefox（不通过客户端）：**
+
+```cmd
+set MOZ_DOM_TRACE=1
+set MOZ_DOM_TRACE_FILE=D:\logs\trace.ndjson
+set MOZ_DISABLE_LAUNCHER_PROCESS=1
+firefox\firefox.exe -no-remote -new-instance https://example.com
+```
+
+**支持的环境变量：**
+
+| 变量 | 用途 |
+|------|------|
+| `MOZ_DOM_TRACE=1` | 开启 trace |
+| `MOZ_DOM_TRACE_FILE=<path>` | 输出路径，PID 自动追加 |
+| `MOZ_DOM_TRACE_LIMIT=<n>` | 单进程行数上限 |
+| `MOZ_DOM_TRACE_PTYPE=<list>` | 启用 trace 的进程类型（逗号分隔） |
+| `MOZ_DISABLE_LAUNCHER_PROCESS=1` | Windows 下避免 launcher 提前退出 |
+
+### 常见问题
+
+**Q：为什么不能用 Puppeteer / Playwright？**
+A：它们注入 JS 钩子，可被页面脚本探测（`toString`、原型链、`navigator.webdriver` 等）。如意 Trace 在 C++ 层埋点，从 JS 视角完全不可见。
+
+**Q：日志文件特别大怎么办？**
+A：单次会话可能产生数百 MB。建议：**分段读取**——把 NDJSON 按行切成多块（例如每 5–10 万行一段），分批投喂给 AI 分析；同时可以 (1) 短时间内只访问目标页 (2) 使用 `MOZ_DOM_TRACE_LIMIT` 限制单进程行数 (3) 用 `MOZ_DOM_TRACE_PTYPE` 只保留关心的进程类型。
+
+**Q："定制内核"徽章显示红色？**
+A：表示选中的 `firefox.exe` 旁边没有 `RUYI_DOMTRACE.txt` 标志文件 —— 你大概率指向了系统自带的官方 Firefox。请确保 `RuyiTrace.exe` 与 `firefox/` 子目录处在同一文件夹。
+
+**Q：可以采集 HTTPS / Service Worker / Web Worker 内的调用吗？**
+A：可以。`MOZ_DOM_TRACE_PTYPE` 自动传递到所有子进程。
+
+### 免责声明
+
+本项目修改了 Mozilla Firefox 源代码（MPL-2.0），二进制中**不包含 Mozilla 商标**。本项目**不隶属于 Mozilla 基金会**，不代表 Mozilla 的官方立场。"Mozilla" 与 "Firefox" 是 Mozilla 基金会的注册商标。
+
+使用本工具产生的一切后果由使用者自行承担。请遵守你所在司法辖区的法律法规及目标网站的服务条款。
+
 ---
 
-## Author
-ruyi
-wechat：Charleval
+<div align="center">
+<sub>如意 · 心想事成 — Ruyi · "as you wish"</sub><br/>
+<sub>Built for researchers, by researchers.</sub>
+</div>
